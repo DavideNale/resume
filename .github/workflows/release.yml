@@ -1,0 +1,47 @@
+name: Release Latest
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Setup | Checkout
+        uses: actions/checkout@v4
+
+      - name: Build | Résumé
+        uses: xu-cheng/latex-action@v3
+        with:
+          latexmk_shell_escape: true
+          latexmk_use_xelatex: true
+          root_file: ./resume.tex
+
+      # Replace latest release
+      - name: Clean | Latest
+        uses: dev-drprasad/delete-tag-and-release@v1.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          delete_release: true
+          tag_name: latest
+
+      - name: Release | Latest
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Résumé, CV
+          body: "The latest version of the résumé from Davide Nale."
+          fail_on_unmatched_files: true
+          draft: false
+          files: |
+            resume.pdf
+
+      - name: Release | Publish
+        uses: eregon/publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ steps.create_release.outputs.id }}
